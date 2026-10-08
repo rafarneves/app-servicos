@@ -3,8 +3,8 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Field, PrimaryButton } from '../components/ui';
-import { colors, radius } from '../lib/theme';
+import { Field, PrimaryButton } from '../../components/ui';
+import { colors, radius } from '../../lib/theme';
 
 const roles = ['Padeiro(a)', 'Cozinheiro(a)', 'Auxiliar', 'Garçom'];
 

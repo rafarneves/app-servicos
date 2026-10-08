@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BannerVerificacao } from '../../components/BannerVerificacao';
 import { Pill, SectionTitle } from '../../components/ui';
 import { colors, radius, shadow } from '../../lib/theme';
 
@@ -33,6 +34,8 @@ export default function ProfessionalHome() {
             <View style={styles.notificationDot} />
           </Pressable>
         </View>
+
+        <BannerVerificacao />
 
         <View style={styles.availabilityCard}>
           <View style={styles.availabilityIcon}>

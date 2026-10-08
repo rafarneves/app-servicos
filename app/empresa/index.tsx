@@ -2,12 +2,13 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BrandMark, Pill, SectionTitle } from '../components/ui';
-import { colors, radius, shadow } from '../lib/theme';
+import { BannerVerificacao } from '../../components/BannerVerificacao';
+import { BrandMark, FloatingButton, Pill, SectionTitle } from '../../components/ui';
+import { colors, radius, shadow } from '../../lib/theme';
 
 export default function CompanyHomeScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <BrandMark compact />
@@ -17,12 +18,14 @@ export default function CompanyHomeScreen() {
           </View>
         </View>
 
+        <BannerVerificacao />
+
         <View style={styles.welcome}>
           <Text style={styles.greeting}>Olá, Padaria Aurora</Text>
           <Text style={styles.subtitle}>Sua operação de hoje, em um só lugar.</Text>
         </View>
 
-        <Pressable onPress={() => router.push('/nova-oportunidade')} style={({ pressed }) => [styles.createCard, pressed && styles.pressed]}>
+        <Pressable onPress={() => router.push('/vaga/nova')} style={({ pressed }) => [styles.createCard, pressed && styles.pressed]}>
           <View style={styles.createIcon}><Ionicons name="add" size={30} color={colors.surface} /></View>
           <View style={styles.createCopy}><Text style={styles.createTitle}>Publicar novo turno</Text><Text style={styles.createText}>Encontre o profissional certo em poucos minutos.</Text></View>
           <Ionicons name="arrow-forward" size={23} color={colors.surface} />
@@ -49,12 +52,13 @@ export default function CompanyHomeScreen() {
           <Pressable style={styles.viewProfile}><Text style={styles.viewProfileText}>Ver</Text></Pressable>
         </View>
       </ScrollView>
+      <FloatingButton label="Nova vaga" icon="add" onPress={() => router.push('/vaga/nova')} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.cream }, container: { padding: 20, paddingBottom: 35, gap: 20 },
+  safeArea: { flex: 1, backgroundColor: colors.cream }, container: { padding: 20, paddingBottom: 100, gap: 20 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, headerActions: { flexDirection: 'row', gap: 9 }, iconButton: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }, dot: { position: 'absolute', top: 9, right: 9, width: 7, height: 7, borderRadius: 4, backgroundColor: colors.primary, borderWidth: 1, borderColor: colors.surface }, avatar: { width: 42, height: 42, borderRadius: 14, backgroundColor: colors.wine, alignItems: 'center', justifyContent: 'center' }, avatarText: { color: colors.surface, fontSize: 12, fontWeight: '900' },
   welcome: { marginTop: 8 }, greeting: { color: colors.wine, fontSize: 27, fontWeight: '900', letterSpacing: -0.7 }, subtitle: { color: colors.inkSoft, fontSize: 14, marginTop: 5 },
   createCard: { backgroundColor: colors.primary, borderRadius: radius.lg, padding: 18, flexDirection: 'row', alignItems: 'center', ...shadow }, pressed: { opacity: 0.8 }, createIcon: { width: 48, height: 48, borderRadius: 17, backgroundColor: '#D94228', alignItems: 'center', justifyContent: 'center' }, createCopy: { flex: 1, marginHorizontal: 13 }, createTitle: { color: colors.surface, fontSize: 17, fontWeight: '900' }, createText: { color: '#FFE4DD', fontSize: 11, lineHeight: 16, marginTop: 3 },

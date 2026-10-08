@@ -1,20 +1,46 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BackButton, BrandMark, Field, PrimaryButton, SecondaryButton } from '../components/ui';
-import { colors } from '../lib/theme';
+import { BackButton, BrandMark, Field, Notice, PrimaryButton, SecondaryButton } from '../../components/ui';
+import { login } from '../../lib/auth';
+import { mensagemDeErro } from '../../lib/errors';
+import { destinoAposAutenticar } from '../../lib/rotas';
+import { colors } from '../../lib/theme';
+import { emailValido } from '../../lib/validacao';
 
 export default function LoginScreen() {
   const { tipo } = useLocalSearchParams<{ tipo?: string }>();
   const isCompany = tipo === 'empresa';
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erros, setErros] = useState<{ email?: string; senha?: string }>({});
+  const [erroEnvio, setErroEnvio] = useState('');
+  const [enviando, setEnviando] = useState(false);
 
-  const handleLogin = () => {
-    if (isCompany) router.replace('/empresa');
-    else router.replace('/(tabs)');
+  const handleLogin = async () => {
+    const novosErros = {
+      email: emailValido(email) ? undefined : 'Informe um e-mail válido.',
+      senha: senha ? undefined : 'Informe sua senha.',
+    };
+    setErros(novosErros);
+    setErroEnvio('');
+    if (novosErros.email || novosErros.senha) return;
+
+    setEnviando(true);
+    try {
+      await login({ email: email.trim(), senha });
+      router.replace(await destinoAposAutenticar());
+    } catch (erro) {
+      setErroEnvio(mensagemDeErro(erro));
+    } finally {
+      setEnviando(false);
+    }
   };
+
+  const handleSocial = () => Alert.alert('Em breve', 'O login com Apple e Google ainda não está disponível. Use seu e-mail e senha.');
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -36,28 +62,39 @@ export default function LoginScreen() {
 
           <View style={styles.form}>
             <Field
-              label="E-mail ou celular"
+              label="E-mail"
               icon="mail-outline"
               placeholder="seuemail@exemplo.com"
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
+              value={email}
+              onChangeText={setEmail}
+              error={erros.email}
+              returnKeyType="next"
             />
             <Field
               label="Senha"
               icon="lock-closed-outline"
               placeholder="Digite sua senha"
               secureTextEntry={!showPassword}
+              autoComplete="password"
+              value={senha}
+              onChangeText={setSenha}
+              error={erros.senha}
+              returnKeyType="go"
+              onSubmitEditing={handleLogin}
               right={(
-                <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={10}>
+                <Pressable onPress={() => setShowPassword((value) => !value)} hitSlop={10} accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
                   <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={21} color={colors.inkSoft} />
                 </Pressable>
               )}
             />
-            <Pressable style={styles.forgotButton}>
+            <Pressable style={styles.forgotButton} onPress={() => router.push({ pathname: '/recuperar-senha', params: { email: email.trim() } })}>
               <Text style={styles.forgotText}>Esqueci minha senha</Text>
             </Pressable>
-            <PrimaryButton label="Entrar" icon="arrow-forward" onPress={handleLogin} />
+            {erroEnvio ? <Notice text={erroEnvio} /> : null}
+            <PrimaryButton label="Entrar" icon="arrow-forward" onPress={handleLogin} loading={enviando} />
           </View>
 
           <View style={styles.orRow}>
@@ -67,8 +104,8 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.socials}>
-            <SecondaryButton label="Apple" icon="logo-apple" onPress={handleLogin} />
-            <SecondaryButton label="Google" icon="logo-google" onPress={handleLogin} />
+            <SecondaryButton label="Apple" icon="logo-apple" onPress={handleSocial} />
+            <SecondaryButton label="Google" icon="logo-google" onPress={handleSocial} />
           </View>
 
           <View style={styles.signUpRow}>

@@ -12,6 +12,8 @@ export const colors = {
   successSoft: '#E9F7F1',
   warning: '#C77A14',
   warningSoft: '#FFF5DF',
+  danger: '#C2362B',
+  dangerSoft: '#FDECEA',
   muted: '#F5EFEC',
   tabInactive: '#978B8D',
 };

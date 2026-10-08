@@ -2,8 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BackButton, BrandMark } from '../components/ui';
-import { colors, radius, shadow } from '../lib/theme';
+import { BackButton, BrandMark } from '../../components/ui';
+import { colors, radius, shadow } from '../../lib/theme';
 
 const profiles = [
   {

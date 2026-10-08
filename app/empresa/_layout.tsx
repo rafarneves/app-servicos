@@ -2,14 +2,21 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import { tabScreenOptions } from '../../components/ui';
 
-export default function ProfissionalTabsLayout() {
+export default function EmpresaTabsLayout() {
   return (
     <Tabs screenOptions={tabScreenOptions}>
       <Tabs.Screen
-        name="buscar"
+        name="index"
         options={{
-          title: 'Buscar',
-          tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size} color={color} />,
+          title: 'Painel',
+          tabBarIcon: ({ color, size }) => <Ionicons name="grid" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="vagas"
+        options={{
+          title: 'Vagas',
+          tabBarIcon: ({ color, size }) => <Ionicons name="briefcase" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -20,17 +27,17 @@ export default function ProfissionalTabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="carteira"
+        name="financeiro"
         options={{
-          title: 'Carteira',
+          title: 'Financeiro',
           tabBarIcon: ({ color, size }) => <Ionicons name="wallet" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="perfil"
+        name="mais"
         options={{
-          title: 'Perfil',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+          title: 'Mais',
+          tabBarIcon: ({ color, size }) => <Ionicons name="menu" size={size} color={color} />,
         }}
       />
     </Tabs>

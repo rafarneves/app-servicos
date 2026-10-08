@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ReactNode } from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
@@ -29,25 +30,34 @@ export function PrimaryButton({
   onPress,
   icon,
   disabled,
+  loading,
 }: {
   label: string;
   onPress: () => void;
   icon?: IconName;
   disabled?: boolean;
+  loading?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
-      disabled={disabled}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      disabled={disabled || loading}
       onPress={onPress}
       style={({ pressed }) => [
         styles.primaryButton,
         pressed && styles.buttonPressed,
-        disabled && styles.buttonDisabled,
+        (disabled || loading) && styles.buttonDisabled,
       ]}
     >
-      <Text style={styles.primaryButtonText}>{label}</Text>
-      {icon ? <Ionicons name={icon} size={20} color={colors.surface} /> : null}
+      {loading ? (
+        <ActivityIndicator color={colors.surface} />
+      ) : (
+        <>
+          <Text style={styles.primaryButtonText}>{label}</Text>
+          {icon ? <Ionicons name={icon} size={20} color={colors.surface} /> : null}
+        </>
+      )}
     </Pressable>
   );
 }
@@ -90,14 +100,16 @@ export function Field({
   label,
   icon,
   right,
+  error,
   ...props
-}: TextInputProps & { label: string; icon?: IconName; right?: ReactNode }) {
+}: TextInputProps & { label: string; icon?: IconName; right?: ReactNode; error?: string }) {
   return (
     <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <View style={styles.fieldBox}>
-        {icon ? <Ionicons name={icon} size={20} color={colors.inkSoft} /> : null}
+      <View style={[styles.fieldBox, error ? styles.fieldBoxError : null]}>
+        {icon ? <Ionicons name={icon} size={20} color={error ? colors.danger : colors.inkSoft} /> : null}
         <TextInput
+          accessibilityLabel={label}
           placeholderTextColor="#A79B9D"
           selectionColor={colors.primary}
           style={styles.fieldInput}
@@ -105,6 +117,30 @@ export function Field({
         />
         {right}
       </View>
+      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
+    </View>
+  );
+}
+
+export function Notice({
+  text,
+  tone = 'danger',
+  icon,
+}: {
+  text: string;
+  tone?: 'danger' | 'warning' | 'success';
+  icon?: IconName;
+}) {
+  const tones = {
+    danger: { backgroundColor: colors.dangerSoft, color: colors.danger, icon: 'alert-circle' as IconName },
+    warning: { backgroundColor: colors.warningSoft, color: colors.warning, icon: 'time' as IconName },
+    success: { backgroundColor: colors.successSoft, color: colors.success, icon: 'checkmark-circle' as IconName },
+  }[tone];
+
+  return (
+    <View accessibilityRole="alert" style={[styles.notice, { backgroundColor: tones.backgroundColor }]}>
+      <Ionicons name={icon ?? tones.icon} size={20} color={tones.color} />
+      <Text style={[styles.noticeText, { color: tones.color }]}>{text}</Text>
     </View>
   );
 }
@@ -156,6 +192,53 @@ export function Pill({
     </View>
   );
 }
+
+export function EmptyState({
+  icon,
+  title,
+  text,
+}: {
+  icon: IconName;
+  title: string;
+  text: string;
+}) {
+  return (
+    <View style={styles.empty}>
+      <View style={styles.emptyIcon}>
+        <Ionicons name={icon} size={34} color={colors.primary} />
+      </View>
+      <Text style={styles.emptyTitle}>{title}</Text>
+      <Text style={styles.emptyText}>{text}</Text>
+    </View>
+  );
+}
+
+export function FloatingButton({ label, icon, onPress }: { label: string; icon: IconName; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.fab, pressed && styles.buttonPressed]}
+    >
+      <Ionicons name={icon} size={22} color={colors.surface} />
+      <Text style={styles.fabText}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export const tabScreenOptions = {
+  headerShown: false,
+  tabBarActiveTintColor: colors.primary,
+  tabBarInactiveTintColor: colors.tabInactive,
+  tabBarLabelStyle: { fontSize: 11, fontWeight: '700', marginTop: 2 },
+  tabBarStyle: {
+    height: 82,
+    paddingTop: 9,
+    paddingBottom: 20,
+    backgroundColor: colors.surface,
+    borderTopColor: colors.border,
+  },
+} as const;
 
 const styles = StyleSheet.create({
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -221,9 +304,35 @@ const styles = StyleSheet.create({
     gap: 11,
   },
   fieldInput: { flex: 1, color: colors.ink, fontSize: 16, paddingVertical: 14 },
+  fieldBoxError: { borderColor: colors.danger },
+  fieldError: { color: colors.danger, fontSize: 12, fontWeight: '700' },
+  notice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: radius.md, padding: 14 },
+  noticeText: { flex: 1, fontSize: 13, lineHeight: 19, fontWeight: '700' },
   sectionTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: 20, fontWeight: '900', color: colors.ink, letterSpacing: -0.4 },
   sectionAction: { fontSize: 14, fontWeight: '800', color: colors.primary },
   pill: { alignSelf: 'flex-start', borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 6 },
   pillText: { fontSize: 12, fontWeight: '800' },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    minHeight: 54,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    shadowColor: colors.wine,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  fabText: { color: colors.surface, fontSize: 15, fontWeight: '900' },
+  empty: { alignItems: 'center', paddingTop: 75, paddingHorizontal: 30 },
+  emptyIcon: { width: 70, height: 70, borderRadius: 25, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { color: colors.ink, fontSize: 18, fontWeight: '900', marginTop: 20, textAlign: 'center' },
+  emptyText: { color: colors.inkSoft, textAlign: 'center', fontSize: 13, lineHeight: 19, marginTop: 7 },
 });
