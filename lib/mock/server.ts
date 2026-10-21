@@ -73,7 +73,7 @@ function encontrar<T>(lista: T[], filtro: (item: T) => boolean, mensagem: string
 // ---------- Sessão ----------
 
 function tokenPara(usuario: UsuarioRec): AuthResponse {
-  return { token: `mock.${usuario.id}`, role: usuario.role, userId: usuario.id };
+  return { token: `mock.${usuario.id}`, role: usuario.role, userId: usuario.id, celularVerificado: usuario.celularVerificado };
 }
 
 function atualizarVerificacao(usuario: UsuarioRec) {

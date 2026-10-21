@@ -30,3 +30,16 @@ export const mascaraCpf = (valor: string) => mascarar(valor, '###.###.###-##');
 export const mascaraCnpj = (valor: string) => mascarar(valor, '##.###.###/####-##');
 export const mascaraCelular = (valor: string) =>
   mascarar(valor, somenteDigitos(valor).length > 10 ? '(##) #####-####' : '(##) ####-####');
+export const mascaraData = (valor: string) => mascarar(valor, '##/##/####');
+export const mascaraHora = (valor: string) => mascarar(valor, '##:##');
+
+// "DD/MM/AAAA" -> "YYYY-MM-DD", ou null se a data não existe.
+export function dataBrParaIso(valor: string) {
+  const [dia, mes, ano] = valor.split('/').map(Number);
+  if (!dia || !mes || !ano || ano < 1000) return null;
+  const data = new Date(ano, mes - 1, dia);
+  if (data.getDate() !== dia || data.getMonth() !== mes - 1) return null;
+  return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+}
+
+export const horaValida = (hora: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(hora);

@@ -1,11 +1,9 @@
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandMark, Field, Notice, PrimaryButton } from '../../components/ui';
 import { logout, reenviarOtp, verificarOtp } from '../../lib/auth';
 import { mensagemDeErro } from '../../lib/errors';
-import { destinoAposAutenticar } from '../../lib/rotas';
 import { colors } from '../../lib/theme';
 import { somenteDigitos } from '../../lib/validacao';
 
@@ -35,8 +33,8 @@ export default function OtpScreen() {
     setErroCampo('');
     setEnviando(true);
     try {
+      // Com o celular verificado, o layout raiz leva para a área do papel.
       await verificarOtp({ codigo });
-      router.replace(await destinoAposAutenticar());
     } catch (erro) {
       setErroEnvio(mensagemDeErro(erro));
     } finally {
@@ -56,10 +54,7 @@ export default function OtpScreen() {
     }
   };
 
-  const sair = async () => {
-    await logout();
-    router.replace('/');
-  };
+  const sair = () => logout();
 
   return (
     <SafeAreaView style={styles.safeArea}>

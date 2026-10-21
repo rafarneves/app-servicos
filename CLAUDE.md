@@ -28,11 +28,13 @@ Backend previsto (não implementado ainda): Java, Spring Boot, JPA/PostgreSQL, J
 
 ## Estrutura de pastas
 
-- `app/`: rotas (expo-router). `app/_layout.tsx` é o Stack raiz; `(auth)/` login, cadastro, OTP e recuperar senha; `(profissional)/` abas do profissional; `empresa/` abas da empresa (ver @docs/abas-e-rotas.md); `vaga/nova` modal.
+- `app/`: rotas (expo-router). `app/_layout.tsx` é o Stack raiz; `(auth)/` login, cadastro, OTP e recuperar senha; `(profissional)/` abas do profissional; `empresa/` abas da empresa (ver @docs/abas-e-rotas.md); `vaga/nova`, `selecao/[candidaturaId]` e `avaliacao/[turnoId]` modais; `vaga/[id]`, `profissional/[id]` e `turno/[id]` compartilhadas pelos dois papéis.
 - `components/ui.tsx`: componentes compartilhados (`BrandMark`, `PrimaryButton`, `SecondaryButton`, `BackButton`, `Field`, `SectionTitle`, `Pill`, `Notice`, `EmptyState`, `FloatingButton`, `tabScreenOptions`); `components/BannerVerificacao.tsx`: aviso de conta em análise.
 - `lib/theme.ts`: tokens de cor, raio e sombra.
-- `lib/validacao.ts`: regras e máscaras de formulário (senha mínima de 8, e-mail, CPF, CNPJ, celular); `lib/rotas.ts`: destino após login/cadastro conforme o papel.
-- `lib/session.ts`: sessão `{ token, role, userId }` no `expo-secure-store`.
+- `lib/validacao.ts`: regras e máscaras de formulário (senha mínima de 8, e-mail, CPF, CNPJ, celular, data, hora); `lib/formato.ts`: datas, notas, iniciais e rótulos/tons de status para exibição.
+- `lib/session.ts`: sessão `{ token, role, userId, celularVerificado }` no `expo-secure-store` e hook `useSessao()`, que o layout raiz usa no `Stack.Protected`. Telas não redirecionam após login/OTP/logout: basta mudar a sessão.
+- `lib/useDados.ts`: hook das telas com dados (`dados`, `erro`, `carregando`, `recarregar`), que recarrega ao voltar o foco. Use com `LoadingState`, `ErrorState` e `EmptyState`.
+- `components/ui.tsx` também tem `LoadingState`, `ErrorState`, `ScreenHeader`, `Segmented`, `Avatar`, `Stars`, `ValueRow`, `confirmarSaida` e `avisarEmBreve` (botões de recursos ainda não feitos).
 - `lib/`: camada de dados (funções async consumidas pelas telas); `lib/mock/`: dados fake.
 
 ## Camada de dados (mocks agora, API depois)
@@ -40,7 +42,7 @@ Backend previsto (não implementado ainda): Java, Spring Boot, JPA/PostgreSQL, J
 - Funções async por domínio em `lib/` (`auth`, `categorias`, `vagas`, `candidaturas`, `contratacoes`, `avaliacoes`, `prestadores`, `financeiro`), consumidas pelas telas. Tipos do contrato em `lib/types.ts`.
 - Todas chamam `request(metodo, caminho, body)` de `lib/http.ts`, com os mesmos caminhos da API (ver @docs/api.md). Hoje `request` responde com `lib/mock/server.ts`; quando o backend existir, só `lib/http.ts` passa a usar `fetch`.
 - O mock (`lib/mock/server.ts` + dados em `lib/mock/db.ts`) aplica as regras de negócio, atraso de 300 a 600 ms e 5% de falha de conexão (`TAXA_DE_FALHA`). Erros chegam como `ApiError` (`lib/errors.ts`) com `status` e `message`.
-- Contas de teste do mock (senha `chama123`): `empresa@chama.app` (Padaria Aurora) e `prestador@chama.app` (Rafael Silva); outras em `lib/mock/db.ts`. Código de OTP e de recuperação de senha no mock: `123456`.
+- Contas de teste do mock (senha `chama123`): `empresa@chama.app` (Padaria Aurora) e `prestador@chama.app` (Rafael Silva); outras em `lib/mock/db.ts`. Código de OTP e de recuperação de senha no mock: `123456`. O Rafael tem um turno hoje na Padaria Aurora (para testar check-in/out) e a Aurora tem um turno da Mariana aguardando confirmação (para testar conclusão e avaliação).
 - Telas nunca importam de `lib/mock/` diretamente, só das funções de `lib/`. Ao mudar um endpoint, atualize juntos `docs/api.md`, `lib/types.ts`, a função em `lib/` e a rota no mock.
 - Mesmo com mocks, siga as regras de negócio abaixo.
 

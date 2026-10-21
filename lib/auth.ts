@@ -1,5 +1,5 @@
 import { request } from './http';
-import { limparSessao, salvarSessao } from './session';
+import { limparSessao, marcarCelularVerificado, salvarSessao } from './session';
 import type {
   AuthResponse,
   LoginRequest,
@@ -38,8 +38,9 @@ export function buscarUsuarioAtual() {
 }
 
 // POST /auth/otp/verificar (código enviado por SMS ao celular do cadastro)
-export function verificarOtp(dados: VerificarOtpRequest) {
-  return request<void>('POST', '/auth/otp/verificar', dados);
+export async function verificarOtp(dados: VerificarOtpRequest) {
+  await request<void>('POST', '/auth/otp/verificar', dados);
+  await marcarCelularVerificado();
 }
 
 // POST /auth/otp/reenviar

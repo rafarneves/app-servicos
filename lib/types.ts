@@ -10,7 +10,7 @@ export type StatusPagamento = 'RETIDO' | 'LIBERADO' | 'ESTORNADO';
 
 // Auth
 
-export type AuthResponse = { token: string; role: Role; userId: string };
+export type AuthResponse = { token: string; role: Role; userId: string; celularVerificado: boolean };
 
 export type LoginRequest = { email: string; senha: string };
 

@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BackButton, BrandMark, Field, Notice, PrimaryButton, SecondaryButton } from '../../components/ui';
 import { login } from '../../lib/auth';
 import { mensagemDeErro } from '../../lib/errors';
-import { destinoAposAutenticar } from '../../lib/rotas';
 import { colors } from '../../lib/theme';
 import { emailValido } from '../../lib/validacao';
 
@@ -31,8 +30,8 @@ export default function LoginScreen() {
 
     setEnviando(true);
     try {
+      // A sessão nova leva o layout raiz para o OTP ou para a área do papel da conta.
       await login({ email: email.trim(), senha });
-      router.replace(await destinoAposAutenticar());
     } catch (erro) {
       setErroEnvio(mensagemDeErro(erro));
     } finally {

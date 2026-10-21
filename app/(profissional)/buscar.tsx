@@ -1,37 +1,75 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BannerVerificacao } from '../../components/BannerVerificacao';
-import { Pill, SectionTitle } from '../../components/ui';
+import { avisarEmBreve, EmptyState, ErrorState, LoadingState, Pill, SectionTitle } from '../../components/ui';
+import { buscarUsuarioAtual } from '../../lib/auth';
+import { listarCategorias } from '../../lib/categorias';
+import { listarMinhasContratacoes } from '../../lib/contratacoes';
+import { buscarCarteira } from '../../lib/financeiro';
+import { diasAte, formatarDia, formatarDistancia, formatarHorario, formatarNota, mesAtualIso, saudacao } from '../../lib/formato';
+import { formatarMoeda } from '../../lib/precos';
+import { buscarPrestador } from '../../lib/prestadores';
 import { colors, radius, shadow } from '../../lib/theme';
+import { useDados } from '../../lib/useDados';
+import { listarVagas } from '../../lib/vagas';
 
-const opportunities = [
-  { id: '1', company: 'Padaria Aurora', role: 'Padeiro(a)', distance: '1,2 km', day: 'Amanhã', time: '06:00 – 12:00', price: 'R$ 180', icon: 'storefront' as const, tone: '#FFF0EB', rating: '4,9', urgent: true },
-  { id: '2', company: 'Bistrô da Praça', role: 'Auxiliar de cozinha', distance: '2,8 km', day: 'Sex, 16 ago', time: '17:00 – 23:00', price: 'R$ 150', icon: 'restaurant' as const, tone: '#EEF7F3', rating: '4,8', urgent: false },
-  { id: '3', company: 'Nori Sushi Bar', role: 'Sushiman', distance: '4,1 km', day: 'Sáb, 17 ago', time: '18:00 – 00:00', price: 'R$ 240', icon: 'fish' as const, tone: '#F1EFFB', rating: '4,7', urgent: false },
-];
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const visualDaCategoria: Record<string, { icon: IconName; tone: string }> = {
+  Padaria: { icon: 'storefront', tone: '#FFF0EB' },
+  Cozinha: { icon: 'restaurant', tone: '#EEF7F3' },
+  Salão: { icon: 'wine', tone: '#FFF5DF' },
+  Sushi: { icon: 'fish', tone: '#F1EFFB' },
+  Caixa: { icon: 'cash', tone: '#EEF7F3' },
+  Entrega: { icon: 'bicycle', tone: '#F1EFFB' },
+};
 
 export default function ProfessionalHome() {
   const [available, setAvailable] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const categories = ['Todos', 'Cozinha', 'Padaria', 'Salão'];
+  const [categoriaId, setCategoriaId] = useState<string>();
+  const [favoritas, setFavoritas] = useState<string[]>([]);
+
+  const resumo = useDados(async () => {
+    const usuario = await buscarUsuarioAtual();
+    const [perfil, carteira, turnos] = await Promise.all([
+      buscarPrestador(usuario.prestadorId ?? ''),
+      buscarCarteira(),
+      listarMinhasContratacoes(),
+    ]);
+    const mes = mesAtualIso();
+    return {
+      nome: usuario.nome.split(' ')[0],
+      cidade: perfil.cidade,
+      aReceber: carteira.aReceber,
+      turnosNoMes: turnos.filter((t) => t.status !== 'CANCELADA' && t.vaga.data.startsWith(mes)).length,
+    };
+  });
+  const categorias = useDados(listarCategorias);
+  const vagas = useDados(() => listarVagas({ categoriaId }), categoriaId ?? 'todas');
+
+  const alternarFavorita = (id: string) =>
+    setFavoritas((atual) => (atual.includes(id) ? atual.filter((f) => f !== id) : [...atual, id]));
+
+  const chips = [{ id: undefined, nome: 'Todos' }, ...(categorias.dados ?? [])];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Bom dia, Rafael 👋</Text>
-            <View style={styles.locationRow}>
-              <Ionicons name="location" size={15} color={colors.primary} />
-              <Text style={styles.location}>São Paulo, SP</Text>
-              <Ionicons name="chevron-down" size={14} color={colors.inkSoft} />
-            </View>
+            <Text style={styles.greeting}>{saudacao()}{resumo.dados ? `, ${resumo.dados.nome}` : ''} 👋</Text>
+            {resumo.dados?.cidade ? (
+              <View style={styles.locationRow}>
+                <Ionicons name="location" size={15} color={colors.primary} />
+                <Text style={styles.location}>{resumo.dados.cidade}</Text>
+              </View>
+            ) : null}
           </View>
-          <Pressable style={styles.notificationButton}>
+          <Pressable style={styles.notificationButton} onPress={() => avisarEmBreve('As notificações')} accessibilityLabel="Notificações">
             <Ionicons name="notifications-outline" size={23} color={colors.ink} />
-            <View style={styles.notificationDot} />
           </Pressable>
         </View>
 
@@ -51,58 +89,71 @@ export default function ProfessionalHome() {
         </View>
 
         <View style={styles.summaryRow}>
-          <View style={styles.summaryCard}>
+          <Pressable style={styles.summaryCard} onPress={() => router.push('/turnos')}>
             <View style={[styles.summaryIcon, { backgroundColor: colors.primarySoft }]}><Ionicons name="calendar-outline" size={19} color={colors.primary} /></View>
-            <Text style={styles.summaryValue}>2</Text>
+            <Text style={styles.summaryValue}>{resumo.dados ? resumo.dados.turnosNoMes : '–'}</Text>
             <Text style={styles.summaryLabel}>turnos este mês</Text>
-          </View>
-          <View style={styles.summaryCard}>
+          </Pressable>
+          <Pressable style={styles.summaryCard} onPress={() => router.push('/carteira')}>
             <View style={[styles.summaryIcon, { backgroundColor: colors.successSoft }]}><Ionicons name="wallet-outline" size={19} color={colors.success} /></View>
-            <Text style={styles.summaryValue}>R$ 330</Text>
+            <Text style={styles.summaryValue}>{resumo.dados ? formatarMoeda(resumo.dados.aReceber) : '–'}</Text>
             <Text style={styles.summaryLabel}>a receber</Text>
-          </View>
+          </Pressable>
         </View>
 
-        <SectionTitle title="Oportunidades perto de você" action="Ver mapa" />
+        <SectionTitle title="Oportunidades perto de você" action="Ver mapa" onAction={() => avisarEmBreve('O mapa de vagas')} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
-          {categories.map((category) => {
-            const active = selectedCategory === category;
+          {chips.map((category) => {
+            const active = categoriaId === category.id;
             return (
-              <Pressable key={category} onPress={() => setSelectedCategory(category)} style={[styles.category, active && styles.categoryActive]}>
-                <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{category}</Text>
+              <Pressable key={category.nome} onPress={() => setCategoriaId(category.id)} style={[styles.category, active && styles.categoryActive]}>
+                <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{category.nome}</Text>
               </Pressable>
             );
           })}
         </ScrollView>
 
-        <View style={styles.opportunityList}>
-          {opportunities.map((item) => (
-            <Pressable key={item.id} style={({ pressed }) => [styles.opportunityCard, pressed && styles.cardPressed]}>
-              <View style={styles.cardTop}>
-                <View style={[styles.companyIcon, { backgroundColor: item.tone }]}><Ionicons name={item.icon} size={24} color={colors.primary} /></View>
-                <View style={styles.companyCopy}>
-                  <Text style={styles.companyName}>{item.company}</Text>
-                  <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={12} color="#F5A623" /><Text style={styles.ratingText}>{item.rating}</Text><Text style={styles.dot}>•</Text><Text style={styles.distance}>{item.distance}</Text>
+        {!vagas.dados ? (
+          vagas.erro ? <ErrorState text={vagas.erro} onRetry={vagas.recarregar} /> : <LoadingState text="Buscando turnos..." />
+        ) : vagas.dados.length === 0 ? (
+          <EmptyState icon="search-outline" title="Nenhum turno por aqui" text="Ainda não há vagas abertas nesta categoria. Tente outra ou volte mais tarde." />
+        ) : (
+          <View style={styles.opportunityList}>
+            {vagas.dados.map((item) => {
+              const visual = visualDaCategoria[item.categoria.nome] ?? { icon: 'briefcase' as const, tone: colors.primarySoft };
+              const favorita = favoritas.includes(item.id);
+              const abrir = () => router.push(`/vaga/${item.id}`);
+              return (
+                <Pressable key={item.id} onPress={abrir} style={({ pressed }) => [styles.opportunityCard, pressed && styles.cardPressed]}>
+                  <View style={styles.cardTop}>
+                    <View style={[styles.companyIcon, { backgroundColor: visual.tone }]}><Ionicons name={visual.icon} size={24} color={colors.primary} /></View>
+                    <View style={styles.companyCopy}>
+                      <Text style={styles.companyName}>{item.empresa.nome}</Text>
+                      <View style={styles.ratingRow}>
+                        <Ionicons name="star" size={12} color={colors.star} /><Text style={styles.ratingText}>{formatarNota(item.empresa.notaMedia)}</Text><Text style={styles.dot}>•</Text><Text style={styles.distance}>{formatarDistancia(item.distanciaKm)}</Text>
+                      </View>
+                    </View>
+                    <Pressable hitSlop={9} onPress={() => alternarFavorita(item.id)} accessibilityLabel={favorita ? 'Remover dos favoritos' : 'Favoritar'}>
+                      <Ionicons name={favorita ? 'heart' : 'heart-outline'} size={23} color={favorita ? colors.primary : colors.inkSoft} />
+                    </Pressable>
                   </View>
-                </View>
-                <Pressable hitSlop={9}><Ionicons name="heart-outline" size={23} color={colors.inkSoft} /></Pressable>
-              </View>
-              <View style={styles.roleLine}>
-                <Text style={styles.roleTitle}>{item.role}</Text>
-                {item.urgent ? <Pill label="Começa logo" tone="primary" /> : null}
-              </View>
-              <View style={styles.detailsRow}>
-                <View style={styles.detailItem}><Ionicons name="calendar-outline" size={17} color={colors.inkSoft} /><Text style={styles.detailText}>{item.day}</Text></View>
-                <View style={styles.detailItem}><Ionicons name="time-outline" size={17} color={colors.inkSoft} /><Text style={styles.detailText}>{item.time}</Text></View>
-              </View>
-              <View style={styles.cardFooter}>
-                <View><Text style={styles.price}>{item.price}</Text><Text style={styles.payment}>Pagamento pelo Chama</Text></View>
-                <View style={styles.viewButton}><Text style={styles.viewButtonText}>Ver turno</Text><Ionicons name="arrow-forward" size={16} color={colors.surface} /></View>
-              </View>
-            </Pressable>
-          ))}
-        </View>
+                  <View style={styles.roleLine}>
+                    <Text style={styles.roleTitle}>{item.titulo}</Text>
+                    {diasAte(item.data) <= 1 ? <Pill label="Começa logo" tone="primary" /> : null}
+                  </View>
+                  <View style={styles.detailsRow}>
+                    <View style={styles.detailItem}><Ionicons name="calendar-outline" size={17} color={colors.inkSoft} /><Text style={styles.detailText}>{formatarDia(item.data)}</Text></View>
+                    <View style={styles.detailItem}><Ionicons name="time-outline" size={17} color={colors.inkSoft} /><Text style={styles.detailText}>{formatarHorario(item.horaInicio, item.horaFim)}</Text></View>
+                  </View>
+                  <View style={styles.cardFooter}>
+                    <View><Text style={styles.price}>{formatarMoeda(item.valorTurno)}</Text><Text style={styles.payment}>Pagamento pelo Chama</Text></View>
+                    <Pressable onPress={abrir} style={styles.viewButton}><Text style={styles.viewButtonText}>Ver turno</Text><Ionicons name="arrow-forward" size={16} color={colors.surface} /></Pressable>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -116,7 +167,6 @@ const styles = StyleSheet.create({
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   location: { color: colors.inkSoft, fontSize: 13, fontWeight: '700' },
   notificationButton: { width: 44, height: 44, borderRadius: 15, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
-  notificationDot: { position: 'absolute', top: 10, right: 10, width: 7, height: 7, borderRadius: 4, backgroundColor: colors.primary, borderWidth: 1.5, borderColor: colors.surface },
   availabilityCard: { backgroundColor: colors.wine, borderRadius: radius.lg, padding: 17, flexDirection: 'row', alignItems: 'center' },
   availabilityIcon: { width: 44, height: 44, borderRadius: 15, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   availabilityCopy: { flex: 1, marginLeft: 12 },

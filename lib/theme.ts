@@ -16,6 +16,7 @@ export const colors = {
   dangerSoft: '#FDECEA',
   muted: '#F5EFEC',
   tabInactive: '#978B8D',
+  star: '#F5A623',
 };
 
 export const radius = {

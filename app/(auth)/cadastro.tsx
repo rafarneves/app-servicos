@@ -91,7 +91,7 @@ export default function SignUpScreen() {
           experiencia: form.experiencia.trim(),
         });
       }
-      router.replace('/otp');
+      // A conta nasce com o celular não verificado: o layout leva para o OTP.
     } catch (erro) {
       setErroEnvio(mensagemDeErro(erro));
     } finally {

@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -10,6 +11,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+import { logout } from '../lib/auth';
 import { colors, radius } from '../lib/theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -66,19 +68,29 @@ export function SecondaryButton({
   label,
   onPress,
   icon,
+  loading,
 }: {
   label: string;
   onPress: () => void;
   icon?: IconName;
+  loading?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: loading, busy: loading }}
+      disabled={loading}
       onPress={onPress}
       style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}
     >
-      {icon ? <Ionicons name={icon} size={20} color={colors.ink} /> : null}
-      <Text style={styles.secondaryButtonText}>{label}</Text>
+      {loading ? (
+        <ActivityIndicator color={colors.ink} />
+      ) : (
+        <>
+          {icon ? <Ionicons name={icon} size={20} color={colors.ink} /> : null}
+          <Text style={styles.secondaryButtonText}>{label}</Text>
+        </>
+      )}
     </Pressable>
   );
 }
@@ -226,6 +238,119 @@ export function FloatingButton({ label, icon, onPress }: { label: string; icon: 
   );
 }
 
+export function LoadingState({ text = 'Carregando...' }: { text?: string }) {
+  return (
+    <View style={styles.loading}>
+      <ActivityIndicator color={colors.primary} size="large" />
+      <Text style={styles.loadingText}>{text}</Text>
+    </View>
+  );
+}
+
+export function ErrorState({ text, onRetry }: { text: string; onRetry: () => void }) {
+  return (
+    <View style={styles.empty}>
+      <View style={[styles.emptyIcon, { backgroundColor: colors.dangerSoft }]}>
+        <Ionicons name="cloud-offline-outline" size={34} color={colors.danger} />
+      </View>
+      <Text style={styles.emptyTitle}>Não foi possível carregar</Text>
+      <Text style={styles.emptyText}>{text}</Text>
+      <Pressable accessibilityRole="button" onPress={onRetry} style={({ pressed }) => [styles.retryButton, pressed && styles.buttonPressed]}>
+        <Ionicons name="refresh" size={18} color={colors.surface} />
+        <Text style={styles.retryText}>Tentar de novo</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+export function ScreenHeader({ title, onBack, right }: { title: string; onBack: () => void; right?: ReactNode }) {
+  return (
+    <View style={styles.screenHeader}>
+      <BackButton onPress={onBack} />
+      <Text style={styles.screenHeaderTitle} numberOfLines={1}>{title}</Text>
+      <View style={styles.screenHeaderRight}>{right}</View>
+    </View>
+  );
+}
+
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <View style={styles.segment}>
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            onPress={() => onChange(option.value)}
+            style={[styles.segmentItem, active && styles.segmentActive]}
+          >
+            <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{option.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+export function Avatar({ initials, size = 42 }: { initials: string; size?: number }) {
+  return (
+    <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 3 }]}>
+      <Text style={[styles.avatarText, { fontSize: size * 0.3 }]}>{initials}</Text>
+    </View>
+  );
+}
+
+// Linha "rótulo ... valor" dos resumos de pagamento (valor do turno, taxa, total).
+export function ValueRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <View style={styles.valueRow}>
+      <Text style={[styles.valueRowLabel, strong && styles.valueRowStrong]}>{label}</Text>
+      <Text style={[styles.valueRowValue, strong && styles.valueRowStrong]}>{value}</Text>
+    </View>
+  );
+}
+
+// Estrelas de 1 a 5. Com onChange vira o seletor de nota da avaliação.
+export function Stars({ value, size = 14, onChange }: { value: number; size?: number; onChange?: (nota: number) => void }) {
+  return (
+    <View style={styles.stars}>
+      {[1, 2, 3, 4, 5].map((nota) => {
+        const icon = <Ionicons name={nota <= value ? 'star' : 'star-outline'} size={size} color={colors.star} />;
+        return onChange ? (
+          <Pressable key={nota} onPress={() => onChange(nota)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Nota ${nota}`}>
+            {icon}
+          </Pressable>
+        ) : (
+          <View key={nota}>{icon}</View>
+        );
+      })}
+    </View>
+  );
+}
+
+// Logout com confirmação. Ao limpar a sessão, o layout raiz volta para a tela de boas-vindas.
+export function confirmarSaida() {
+  Alert.alert('Sair da conta?', 'Você precisará entrar de novo para acessar o Chama.', [
+    { text: 'Cancelar', style: 'cancel' },
+    { text: 'Sair', style: 'destructive', onPress: () => void logout() },
+  ]);
+}
+
+// Para botões cujo recurso ainda não existe (chat, mapa, saque...). Ver docs/roadmap.md.
+export function avisarEmBreve(recurso: string) {
+  Alert.alert('Em breve', `${recurso} ainda não está disponível nesta versão do Chama.`);
+}
+
 export const tabScreenOptions = {
   headerShown: false,
   tabBarActiveTintColor: colors.primary,
@@ -335,4 +460,23 @@ const styles = StyleSheet.create({
   emptyIcon: { width: 70, height: 70, borderRadius: 25, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { color: colors.ink, fontSize: 18, fontWeight: '900', marginTop: 20, textAlign: 'center' },
   emptyText: { color: colors.inkSoft, textAlign: 'center', fontSize: 13, lineHeight: 19, marginTop: 7 },
+  loading: { alignItems: 'center', paddingVertical: 60, gap: 12 },
+  loadingText: { color: colors.inkSoft, fontSize: 13, fontWeight: '600' },
+  retryButton: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.primary, borderRadius: radius.pill, paddingHorizontal: 18, paddingVertical: 11, marginTop: 18 },
+  retryText: { color: colors.surface, fontSize: 13, fontWeight: '900' },
+  screenHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  screenHeaderTitle: { flex: 1, textAlign: 'center', color: colors.ink, fontSize: 16, fontWeight: '900' },
+  screenHeaderRight: { width: 44, alignItems: 'flex-end' },
+  segment: { flexDirection: 'row', backgroundColor: colors.muted, borderRadius: 16, padding: 4 },
+  segmentItem: { flex: 1, minHeight: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 13 },
+  segmentActive: { backgroundColor: colors.surface },
+  segmentText: { color: colors.inkSoft, fontSize: 13, fontWeight: '800' },
+  segmentTextActive: { color: colors.ink },
+  avatar: { backgroundColor: colors.wine, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: colors.surface, fontWeight: '900' },
+  stars: { flexDirection: 'row', gap: 3 },
+  valueRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
+  valueRowLabel: { color: colors.inkSoft, fontSize: 13 },
+  valueRowValue: { color: colors.ink, fontSize: 13, fontWeight: '700' },
+  valueRowStrong: { color: colors.ink, fontSize: 15, fontWeight: '900' },
 });

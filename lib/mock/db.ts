@@ -165,6 +165,9 @@ const vagas: VagaRec[] = [
   vaga('vag-8', 'emp-bistro', 'cat-cozinha', 'Auxiliar de cozinha', -10, '17:00', '23:00', 0, 2.8, 'Apoio no jantar.'),
   vaga('vag-9', 'emp-bistro', 'cat-cozinha', 'Auxiliar de cozinha', -8, '17:00', '23:00', 0, 2.8, 'Apoio no jantar.'),
   vaga('vag-10', 'emp-nori', 'cat-salao', 'Garçom', -5, '18:00', '23:59', 0, 4.1, 'Atendimento de salão.'),
+  // Turno de hoje (testar check-in/out) e turno aguardando a confirmação da empresa
+  vaga('vag-11', 'emp-aurora', 'cat-padaria', 'Padeiro(a)', 0, '06:00', '14:00', 0, 1.2, 'Produção do dia e reposição da vitrine.'),
+  vaga('vag-12', 'emp-aurora', 'cat-cozinha', 'Auxiliar de cozinha', -1, '11:00', '17:00', 0, 1.2, 'Apoio na cozinha no almoço.'),
 ];
 
 const candidaturas: CandidaturaRec[] = [
@@ -177,30 +180,36 @@ const candidaturas: CandidaturaRec[] = [
   { id: 'can-7', vagaId: 'vag-8', prestadorId: 'pre-rafael', status: 'SELECIONADA', criadoEm: instante(diaRelativo(-13), '11:00') },
   { id: 'can-8', vagaId: 'vag-9', prestadorId: 'pre-mariana', status: 'SELECIONADA', criadoEm: instante(diaRelativo(-11), '11:00') },
   { id: 'can-9', vagaId: 'vag-10', prestadorId: 'pre-lucas', status: 'SELECIONADA', criadoEm: instante(diaRelativo(-7), '11:00') },
+  { id: 'can-10', vagaId: 'vag-11', prestadorId: 'pre-rafael', status: 'SELECIONADA', criadoEm: instante(diaRelativo(-2), '15:00') },
+  { id: 'can-11', vagaId: 'vag-12', prestadorId: 'pre-mariana', status: 'SELECIONADA', criadoEm: instante(diaRelativo(-3), '15:00') },
 ];
 
-function contratacao(id: string, candidaturaId: string, concluida: boolean): ContratacaoRec {
+function contratacao(id: string, candidaturaId: string, status: 'CONFIRMADA' | 'AGUARDANDO_CONFIRMACAO' | 'CONCLUIDA'): ContratacaoRec {
   const cand = candidaturas.find((c) => c.id === candidaturaId)!;
   const v = vagas.find((x) => x.id === cand.vagaId)!;
+  const trabalhou = status !== 'CONFIRMADA';
+  const concluida = status === 'CONCLUIDA';
 
   return {
     id, candidaturaId, vagaId: v.id, prestadorId: cand.prestadorId,
-    status: concluida ? 'CONCLUIDA' : 'CONFIRMADA',
+    status,
     ...resumoDoTurno(v.valorTurno),
     statusPagamento: concluida ? 'LIBERADO' : 'RETIDO',
     criadoEm: cand.criadoEm,
-    checkInEm: concluida ? instante(v.data, v.horaInicio) : null,
-    checkOutEm: concluida ? instante(v.data, v.horaFim) : null,
+    checkInEm: trabalhou ? instante(v.data, v.horaInicio) : null,
+    checkOutEm: trabalhou ? instante(v.data, v.horaFim) : null,
     concluidoEm: concluida ? instante(v.data, v.horaFim) : null,
   };
 }
 
 const contratacoes: ContratacaoRec[] = [
-  contratacao('con-1', 'can-5', false),
-  contratacao('con-2', 'can-6', true),
-  contratacao('con-3', 'can-7', true),
-  contratacao('con-4', 'can-8', true),
-  contratacao('con-5', 'can-9', true),
+  contratacao('con-1', 'can-5', 'CONFIRMADA'),
+  contratacao('con-2', 'can-6', 'CONCLUIDA'),
+  contratacao('con-3', 'can-7', 'CONCLUIDA'),
+  contratacao('con-4', 'can-8', 'CONCLUIDA'),
+  contratacao('con-5', 'can-9', 'CONCLUIDA'),
+  contratacao('con-6', 'can-10', 'CONFIRMADA'),
+  contratacao('con-7', 'can-11', 'AGUARDANDO_CONFIRMACAO'),
 ];
 
 const avaliacoes: AvaliacaoRec[] = [

@@ -27,9 +27,9 @@ Verificação de cadastro: contas novas nascem com `statusVerificacao = PENDENTE
 
 ## Auth
 
-- `POST /auth/registro/empresa` body `{ email, senha (min 8), razaoSocial, cnpj (14 dígitos), celular (10 ou 11 dígitos), nomeResponsavel?, cidade?, tipoNegocio? }` -> `{ token, role, userId }`. 409 se o e-mail já existe.
-- `POST /auth/registro/prestador` body `{ email, senha (min 8), nome, cpf (11 dígitos), celular (10 ou 11 dígitos), funcao?, cidade?, experiencia? }` -> `{ token, role, userId }`. 409 se o e-mail já existe.
-- `POST /auth/login` body `{ email, senha }` -> `{ token, role, userId }` (401 "Credenciais inválidas", 429 bloqueado).
+- `POST /auth/registro/empresa` body `{ email, senha (min 8), razaoSocial, cnpj (14 dígitos), celular (10 ou 11 dígitos), nomeResponsavel?, cidade?, tipoNegocio? }` -> `{ token, role, userId, celularVerificado }`. 409 se o e-mail já existe.
+- `POST /auth/registro/prestador` body `{ email, senha (min 8), nome, cpf (11 dígitos), celular (10 ou 11 dígitos), funcao?, cidade?, experiencia? }` -> `{ token, role, userId, celularVerificado }`. 409 se o e-mail já existe.
+- `POST /auth/login` body `{ email, senha }` -> `{ token, role, userId, celularVerificado }` (401 "Credenciais inválidas", 429 bloqueado).
 - `GET /auth/me` -> `UsuarioAtual { userId, email, role, nome, celularVerificado, statusVerificacao, empresaId, prestadorId }`.
 - `POST /auth/otp/verificar` (autenticado) body `{ codigo }` -> 204 e marca o celular como verificado; 400 se o código não confere. No mock o código é sempre `123456`.
 - `POST /auth/otp/reenviar` (autenticado) -> 204.
